@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 
 namespace MilitaryScheduler.Controllers
 {
+    [Produces("application/json")]
+    [Route("api/Events")]
     public class EventsController : Controller
     {
         private readonly ApplicationDbContext _context;

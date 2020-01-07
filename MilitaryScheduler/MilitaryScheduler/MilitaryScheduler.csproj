@@ -13,6 +13,8 @@
 
   <ItemGroup>
     <Folder Include="Areas\Identity\Services\" />
+    <Folder Include="wwwroot\icons\fonts\" />
+    <Folder Include="wwwroot\js\daypilot\" />
   </ItemGroup>
 
 </Project>
