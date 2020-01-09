@@ -22,9 +22,10 @@ namespace MilitaryScheduler.Controllers
 
         // GET: api/Events
         [HttpGet]
-        public IEnumerable<CalendarEvent> GetEvents([FromQuery] DateTime start, [FromQuery] DateTime end)
+        public IEnumerable<CalendarEvent> GetEvents(DateTime start,DateTime end)
         {
-            return from e in _context.Events where !((e.End <= start) || (e.Start >= end)) select e;
+            var reponse = _context.Events.Where(e => !((e.End <= start) || (e.Start >= end))).ToList();
+            return reponse;
         }
 
         // GET: api/Events/5

@@ -26,9 +26,9 @@
 else
 {
     <p class="mega">
-        NOT ALLOWED
+        Military Scheduler
     </p>
-    <p class="mini">Please login in order to access this page</p>
+    <p class="mini">Please login in order to access the time scheduler.</p>
 }
 
 <script>
@@ -47,30 +47,49 @@ else
 
     var dp = new DayPilot.Month("dp");
     dp.onTimeRangeSelected = function (args) {
-        DayPilot.Modal.prompt("Create a new event:", "Event").then(function (modal) {
-            var dp = args.control;
-            dp.clearSelection();
-            if (!modal.result) {
-                return;
-            }
-            var params = {
+        debugger;
+
+        var response = "";
+        var getParams = {
                 start: args.start.toString(),
-                end: args.end.toString(),
-                text: modal.result,
-                resource: args.resource
+                end: args.end.toString()
             };
-            $.ajax({
-                type: 'POST',
+        $.ajax({
+                type: 'GET',
                 url: '/api/events',
-                data: JSON.stringify(params),
+                data: JSON.stringify(getParams),
                 success: function (data) {
-                    dp.events.add(new DayPilot.Event(data));
-                    dp.message("Event created");
+                    debugger;
+                    response = data;
                 },
                 contentType: "application/json",
                 dataType: 'json'
             });
-        });
+
+        //DayPilot.Modal.prompt("Create a new event:", "Event").then(function (modal) {
+        //    var dp = args.control;
+        //    dp.clearSelection();
+        //    if (!modal.result) {
+        //        return;
+        //    }
+        //    var params = {
+        //        start: args.start.toString(),
+        //        end: args.end.toString(),
+        //        text: modal.result,
+        //        resource: args.resource
+        //    };
+        //    $.ajax({
+        //        type: 'POST',
+        //        url: '/api/events',
+        //        data: JSON.stringify(params),
+        //        success: function (data) {
+        //            dp.events.add(new DayPilot.Event(data));
+        //            dp.message("Event created");
+        //        },
+        //        contentType: "application/json",
+        //        dataType: 'json'
+        //    });
+        //});
     };
     dp.onEventMove = function (args) {
         var params = {
