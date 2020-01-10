@@ -9,6 +9,9 @@
 
 @if (SignInManager.IsSignedIn(User))
 {
+    <br />
+    <br />
+    <br />
     <div class="main">
         <div style="float:left; width: 150px; display:none;">
             <div id="nav"></div>
@@ -32,6 +35,7 @@ else
 }
 
 <script>
+    var tempControl = new Object();
 
     var nav = new DayPilot.Navigator("nav");
     nav.showMonths = 3;
@@ -48,83 +52,27 @@ else
     var dp = new DayPilot.Month("dp");
     dp.onTimeRangeSelected = function (args) {
         debugger;
-
-        var response = "";
-        var getParams = {
-                start: args.start.toString(),
-                end: args.end.toString()
-            };
+        tempControl = args;
         $.ajax({
-                type: 'GET',
-                url: '/api/events',
-                data: JSON.stringify(getParams),
-                success: function (data) {
-                    debugger;
-                    response = data;
-                },
-                contentType: "application/json",
-                dataType: 'json'
-            });
-
-        //DayPilot.Modal.prompt("Create a new event:", "Event").then(function (modal) {
-        //    var dp = args.control;
-        //    dp.clearSelection();
-        //    if (!modal.result) {
-        //        return;
-        //    }
-        //    var params = {
-        //        start: args.start.toString(),
-        //        end: args.end.toString(),
-        //        text: modal.result,
-        //        resource: args.resource
-        //    };
-        //    $.ajax({
-        //        type: 'POST',
-        //        url: '/api/events',
-        //        data: JSON.stringify(params),
-        //        success: function (data) {
-        //            dp.events.add(new DayPilot.Event(data));
-        //            dp.message("Event created");
-        //        },
-        //        contentType: "application/json",
-        //        dataType: 'json'
-        //    });
-        //});
-    };
-    dp.onEventMove = function (args) {
-        var params = {
-            id: args.e.id(),
-            start: args.newStart.toString(),
-            end: args.newEnd.toString()
-        };
-        $.ajax({
-            type: 'PUT',
-            url: '/api/events/' + args.e.id() + "/move",
-            data: JSON.stringify(params),
+            type: 'GET',
+            url: '/api/events/getoverlapping?start=' + args.start.toString(),
             success: function (data) {
-                dp.message("Event moved");
+                if (data === undefined || data === null) {
+                    createNewEvent();
+                }
+                else {
+                    console.log("Request change");
+                }
             },
             contentType: "application/json",
             dataType: 'json'
         });
+
+
     };
-    dp.onEventResize = function (args) {
-        var params = {
-            id: args.e.id(),
-            start: args.newStart.toString(),
-            end: args.newEnd.toString()
-        };
-        $.ajax({
-            type: 'PUT',
-            url: '/api/events/' + args.e.id() + "/move",
-            data: JSON.stringify(params),
-            success: function (data) {
-                dp.message("Event resized");
-            },
-            contentType: "application/json",
-            dataType: 'json'
-        });
-    };
+    dp.eventMoveHandling = null;
+    dp.eventResizeHandling = null;
+
     dp.onBeforeEventRender = function (args) {
         args.data.backColor = args.data.color;
         args.data.areas = [
@@ -141,52 +89,53 @@ else
                         type: 'DELETE',
                         url: '/api/events/' + e.id(),
                         success: function (data) {
-                            dp.events.remove(e);
-                            dp.message("Event deleted");
+                            debugger;
+                            if (data === "Forbidden") {
+                                dp.message("You can not delete appointments that are not yours");
+                            }
+                            else {
+                                dp.events.remove(e);
+                                dp.message("Event deleted");
+                            }
                         },
                         contentType: "application/json",
                         dataType: 'json'
                     });
                 }
-            },
-            {
-                text: "-"
-            },
-            {
-                text: "Blue",
-                icon: "icon icon-blue",
-                color: "#a2c4c9",
-                onClick: function (args) { updateColor(args.source, args.item.color); }
-            },
-            {
-                text: "Green",
-                icon: "icon icon-green",
-                color: "#b6d7a8",
-                onClick: function (args) { updateColor(args.source, args.item.color); }
-            },
-            {
-                text: "Yellow",
-                icon: "icon icon-yellow",
-                color: "#ffe599",
-                onClick: function (args) { updateColor(args.source, args.item.color); }
-            },
-            {
-                text: "Red",
-                icon: "icon icon-red",
-                color: "#ea9999",
-                onClick: function (args) { updateColor(args.source, args.item.color); }
-            },
-            {
-                text: "Auto",
-                color: "auto",
-                onClick: function (args) { updateColor(args.source, args.item.color); }
-            },
+            }
         ]
     });
+
+    dp.allowMultiSelect = false;
     dp.init();
 
     dp.events.load("/api/events");
 
+    function createNewEvent() {
+        DayPilot.Modal.confirm("Book this day for yourself?", { okText: "Yes", cancelText: "No" }).then(function (modal) {
+            var dp = tempControl.control;
+            dp.clearSelection();
+            if (modal.result === undefined) {
+                return;
+            }
+            var params = {
+                start: tempControl.start.toString(),
+                end: tempControl.end.toString(),
+                resource: tempControl.resource
+            };
+            $.ajax({
+                type: 'POST',
+                url: '/api/events',
+                data: JSON.stringify(params),
+                success: function (data) {
+                    dp.events.add(new DayPilot.Event(data));
+                    dp.message("Reservation was succesful");
+                },
+                contentType: "application/json",
+                dataType: 'json'
+            });
+        });
+    }
 
     function updateColor(e, color) {
         var params = {

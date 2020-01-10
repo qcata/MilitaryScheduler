@@ -5,6 +5,7 @@ using MilitaryScheduler.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace MilitaryScheduler.Controllers
@@ -22,10 +23,27 @@ namespace MilitaryScheduler.Controllers
 
         // GET: api/Events
         [HttpGet]
-        public IEnumerable<CalendarEvent> GetEvents(DateTime start,DateTime end)
+        public IEnumerable<CalendarEvent> GetEvents([FromQuery]DateTime start, [FromQuery]DateTime end)
         {
             var reponse = _context.Events.Where(e => !((e.End <= start) || (e.Start >= end))).ToList();
+            foreach (var responseEvent in reponse)
+            {
+                if (responseEvent.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
+                { 
+                    responseEvent.Color = "#ea9999";
+                }
+            }
             return reponse;
+        }
+
+        // GET: api/Events/GetOverlapping
+        [HttpGet("GetOverlapping/")]
+        public string GetOverlappingEvents(string start)
+        {
+            var date = start.Substring(0, start.IndexOf('T'));
+            DateTime startDate = DateTime.ParseExact(date, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+
+            return _context.Events.Where(e => (e.Start.Day == startDate.Day) && (e.Start.Year == startDate.Year)).FirstOrDefault()?.Text;
         }
 
         // GET: api/Events/5
@@ -91,6 +109,13 @@ namespace MilitaryScheduler.Controllers
                 return BadRequest(ModelState);
             }
 
+            if (@event.UserId == null)
+            {
+                @event.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                @event.Text = User.FindFirstValue(ClaimTypes.Name);
+            }
+
+            @event.Color = "#b6d7a8";
             _context.Events.Add(@event);
             await _context.SaveChangesAsync();
 
@@ -110,6 +135,11 @@ namespace MilitaryScheduler.Controllers
             if (@event == null)
             {
                 return NotFound();
+            }
+
+            if (@event.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
+            {
+                return Ok("Forbidden");
             }
 
             _context.Events.Remove(@event);
@@ -140,42 +170,6 @@ namespace MilitaryScheduler.Controllers
 
             @event.Start = param.Start;
             @event.End = param.End;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EventExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // PUT: api/Events/5/color
-        [HttpPut("{id}/color")]
-        public async Task<IActionResult> SetEventColor([FromRoute] int id, [FromBody] EventColorParams param)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var @event = await _context.Events.SingleOrDefaultAsync(m => m.Id == id);
-            if (@event == null)
-            {
-                return NotFound();
-            }
-
-            @event.Color = param.Color;
 
             try
             {
