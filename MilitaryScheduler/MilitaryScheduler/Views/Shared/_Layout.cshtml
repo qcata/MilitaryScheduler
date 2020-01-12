@@ -1,4 +1,8 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
@@ -31,6 +35,17 @@
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
                     <li><a asp-area="" asp-controller="Home" asp-action="Index">Home</a></li>
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        if (UserManager.FindByEmailAsync(User.Identity.Name).Result.IsSystemAdmin)
+                        {
+                            <li><a asp-area="" asp-controller="Requests" asp-action="Index">All Requests</a></li>
+                        }
+                        else
+                        {
+                            <li><a asp-area="" asp-controller="Requests" asp-action="MyRequests">My Requests</a></li>
+                        }
+                    }
                 </ul>
                 <partial name="_LoginPartial" />
             </div>

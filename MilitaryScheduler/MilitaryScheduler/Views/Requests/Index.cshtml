@@ -1,0 +1,45 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using MilitaryScheduler.ViewModels
+
+@model RequestsViewModel
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+
+<script src="~/js/daypilot/daypilot-all.min.js" asp-append-version="true"></script>
+<link href="icons/style.css" rel="stylesheet" type="text/css">
+
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">From</th>
+                <th scope="col">To</th>
+                <th scope="col"></th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var request in Model.RequestsList)
+            {
+                <tr>
+                    <th scope="row">@request.RequestId</th>
+                    <td>@request.TargetUser</td>
+                    <td>@request.TargetedUser</td>
+                    <td><a asp-area="" asp-controller="Requests" asp-action="ApproveEventRequest" asp-route-requestId="@request.RequestId">Approve</a></td>
+                    <td><a asp-area="" asp-controller="Requests" asp-action="DeleteEventRequest" asp-route-requestId="@request.RequestId">Delete</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="mega">
+        Military Scheduler
+    </p>
+    <p class="mini">Please login in order to access the time scheduler.</p>
+}

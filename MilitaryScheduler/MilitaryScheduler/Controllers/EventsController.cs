@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MilitaryScheduler.Data;
 using MilitaryScheduler.Models;
@@ -14,11 +15,14 @@ namespace MilitaryScheduler.Controllers
     [Route("api/Events")]
     public class EventsController : Controller
     {
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
 
-        public EventsController(ApplicationDbContext context)
+        public EventsController(ApplicationDbContext context,
+                                UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: api/Events
@@ -29,11 +33,35 @@ namespace MilitaryScheduler.Controllers
             foreach (var responseEvent in reponse)
             {
                 if (responseEvent.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
-                { 
+                {
                     responseEvent.Color = "#ea9999";
                 }
             }
             return reponse;
+        }
+
+        [HttpGet("CreateChangeRequest/")]
+        public string CreateChangeRequest(int eventId)
+        {
+            var targetedEvent = _context.Events.FirstOrDefault(e => e.Id == eventId);
+            if (targetedEvent != null)
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var changeRequest = new RequestModel()
+                {
+                    EventId = eventId.ToString(),
+                    TargetedUserId = targetedEvent.UserId,
+                    TargetUserId = currentUserId
+                };
+
+                _context.Requests.Add(changeRequest);
+                 _context.SaveChanges();
+                return "Success";
+            }
+            else
+            {
+                return "Forbidden";
+            }
         }
 
         // GET: api/Events/GetOverlapping
@@ -43,7 +71,18 @@ namespace MilitaryScheduler.Controllers
             var date = start.Substring(0, start.IndexOf('T'));
             DateTime startDate = DateTime.ParseExact(date, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
-            return _context.Events.Where(e => (e.Start.Day == startDate.Day) && (e.Start.Year == startDate.Year)).FirstOrDefault()?.Text;
+            var overlappingEvent = _context.Events.Where(e => (e.Start.Day == startDate.Day) && (e.Start.Year == startDate.Year)).FirstOrDefault();
+            if (overlappingEvent != null)
+            {
+                var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var user = _userManager.FindByIdAsync(userID).Result;
+                var returnedObject = (overlappingEvent.Id, overlappingEvent.Text, user.IsSystemAdmin.ToString());
+                return returnedObject.ToString();
+            }
+            else
+            {
+                return string.Empty;
+            }
         }
 
         // GET: api/Events/5
@@ -65,63 +104,6 @@ namespace MilitaryScheduler.Controllers
             return Ok(@event);
         }
 
-        // PUT: api/Events/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutEvent([FromRoute] int id, [FromBody] CalendarEvent @event)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (id != @event.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(@event).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EventExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Events
-        [HttpPost]
-        public async Task<IActionResult> PostEvent([FromBody] CalendarEvent @event)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (@event.UserId == null)
-            {
-                @event.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                @event.Text = User.FindFirstValue(ClaimTypes.Name);
-            }
-
-            @event.Color = "#b6d7a8";
-            _context.Events.Add(@event);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetEvent", new { id = @event.Id }, @event);
-        }
-
         // DELETE: api/Events/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEvent([FromRoute] int id)
@@ -139,7 +121,10 @@ namespace MilitaryScheduler.Controllers
 
             if (@event.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
             {
-                return Ok("Forbidden");
+                if (!_userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)).Result.IsSystemAdmin)
+                {
+                    return Ok("Forbidden");
+                }
             }
 
             _context.Events.Remove(@event);
@@ -148,59 +133,6 @@ namespace MilitaryScheduler.Controllers
             return Ok(@event);
         }
 
-        private bool EventExists(int id)
-        {
-            return _context.Events.Any(e => e.Id == id);
-        }
-
-        // PUT: api/Events/5/move
-        [HttpPut("{id}/move")]
-        public async Task<IActionResult> MoveEvent([FromRoute] int id, [FromBody] EventMoveParams param)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var @event = await _context.Events.SingleOrDefaultAsync(m => m.Id == id);
-            if (@event == null)
-            {
-                return NotFound();
-            }
-
-            @event.Start = param.Start;
-            @event.End = param.End;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EventExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-    }
-
-    public class EventMoveParams
-    {
-        public DateTime Start { get; set; }
-        public DateTime End { get; set; }
-    }
-
-    public class EventColorParams
-    {
-        public string Color { get; set; }
     }
 
 }

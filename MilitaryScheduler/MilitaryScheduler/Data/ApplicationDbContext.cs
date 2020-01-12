@@ -12,6 +12,7 @@ namespace MilitaryScheduler.Data
         }
         
         public DbSet<CalendarEvent> Events { get; set; }
+        public DbSet<RequestModel> Requests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

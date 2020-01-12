@@ -6,5 +6,7 @@ namespace MilitaryScheduler.Models
     public class ApplicationUser: IdentityUser
     {
         public MilitaryGrade MilitaryGrade { get; set; }
+
+        public bool IsSystemAdmin { get; set; }
     }
 }

@@ -36,6 +36,7 @@ else
 
 <script>
     var tempControl = new Object();
+    var tempEventId = 0;
 
     var nav = new DayPilot.Navigator("nav");
     nav.showMonths = 3;
@@ -51,7 +52,6 @@ else
 
     var dp = new DayPilot.Month("dp");
     dp.onTimeRangeSelected = function (args) {
-        debugger;
         tempControl = args;
         $.ajax({
             type: 'GET',
@@ -61,7 +61,7 @@ else
                     createNewEvent();
                 }
                 else {
-                    console.log("Request change");
+                    requestChangeEvent(data);
                 }
             },
             contentType: "application/json",
@@ -89,7 +89,6 @@ else
                         type: 'DELETE',
                         url: '/api/events/' + e.id(),
                         success: function (data) {
-                            debugger;
                             if (data === "Forbidden") {
                                 dp.message("You can not delete appointments that are not yours");
                             }
@@ -137,22 +136,34 @@ else
         });
     }
 
-    function updateColor(e, color) {
-        var params = {
-            color: color
-        };
-        $.ajax({
-            type: 'PUT',
-            url: '/api/events/' + e.id() + '/color',
-            data: JSON.stringify(params),
-            success: function (data) {
-                e.data.color = color;
-                dp.events.update(e);
-                dp.message("Color updated");
-            },
-            contentType: "application/json",
-            dataType: 'json'
-        });
+    function requestChangeEvent(data) {
+        data = data.slice(1, -1);
+        var response = data.split(/[\s,]+/);
+        tempEventId = response[0];
+        if (response[2] === "False") {
+            DayPilot.Modal.confirm("This event is booked for " + response[1] + ".\n Do you want to create a Change Request for this day?", { okText: "Yes", cancelText: "No" }).then(function (modal) {
+                var dp = tempControl.control;
+                dp.clearSelection();
+                if (modal.result === undefined) {
+                    return;
+                }
+                $.ajax({
+                    type: 'GET',
+                    url: '/api/events/createchangerequest?eventId=' + tempEventId,
+                    success: function (data) {
+                        debugger;
+                        if (data === "Forbidden") {
+                            dp.message("You can not create a change request for this event");
+                        }
+                        else {
+                            dp.message("Change request sucesfully created");
+                        }
+                    },
+                    contentType: "application/json",
+                    dataType: 'json'
+                });
+            });
+        }
     }
 
     document.addEventListener('DOMContentLoaded', function () {

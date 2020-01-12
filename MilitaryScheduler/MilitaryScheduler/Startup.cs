@@ -1,12 +1,15 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MilitaryScheduler.Data;
 using MilitaryScheduler.Models;
+using System;
+using System.Threading.Tasks;
 
 namespace MilitaryScheduler
 {
@@ -39,7 +42,7 @@ namespace MilitaryScheduler
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider services)
         {
             if (env.IsDevelopment())
             {
@@ -51,6 +54,7 @@ namespace MilitaryScheduler
                 app.UseExceptionHandler("/Home/Error");
                 app.UseHsts();
             }
+
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
@@ -64,6 +68,32 @@ namespace MilitaryScheduler
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
+            CreateUserRoles(services);
         }
+
+        private void CreateUserRoles(IServiceProvider serviceProvider)
+        {
+            var UserManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            // find the user with the admin email 
+            var _user = UserManager.FindByEmailAsync("admin@email.com").Result;
+
+            // check if the user exists
+            if (_user == null)
+            {
+                //Here you could create the super admin who will maintain the web app
+                var poweruser = new ApplicationUser
+                {
+                    UserName = "admin@email.com",
+                    Email = "admin@email.com",
+                    IsSystemAdmin = true
+                };
+                string adminPassword = "Abc_123!";
+
+                _ = UserManager.CreateAsync(poweruser, adminPassword).Result;
+            }
+        }
+
+
     }
 }
