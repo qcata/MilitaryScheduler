@@ -51,7 +51,8 @@ namespace MilitaryScheduler.Controllers
                 {
                     EventId = eventId.ToString(),
                     TargetedUserId = targetedEvent.UserId,
-                    TargetUserId = currentUserId
+                    TargetUserId = currentUserId,
+                    Date = targetedEvent.Start.ToString()
                 };
 
                 _context.Requests.Add(changeRequest);

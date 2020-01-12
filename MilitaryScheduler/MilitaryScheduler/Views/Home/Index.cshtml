@@ -62,7 +62,6 @@ else
             type: 'GET',
             url: '/api/events/getoverlapping?start=' + args.start.toString(),
             success: function (data) {
-                debugger;
                 if (data === undefined || data === null || data == '') {
                     createNewEvent();
                 }
@@ -157,7 +156,6 @@ else
                 if (modal.result === undefined) {
                     return;
             }
-            debugger;
             var uri = '@Url.Action("LoadEventPage","Home")?startDate=' + tempControl.start.toString();
             $.ajax({
                 type: 'GET',

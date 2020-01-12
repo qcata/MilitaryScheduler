@@ -18,6 +18,7 @@
                 <th scope="col">#</th>
                 <th scope="col">From</th>
                 <th scope="col">To</th>
+                <th scope="col">Date</th>
                 <th scope="col"></th>
                 <th scope="col"></th>
             </tr>
@@ -29,6 +30,7 @@
                     <th scope="row">@request.RequestId</th>
                     <td>@request.TargetUser</td>
                     <td>@request.TargetedUser</td>
+                    <td>@request.Date</td>
                     <td><a asp-area="" asp-controller="Requests" asp-action="ApproveEventRequest" asp-route-requestId="@request.RequestId">Approve</a></td>
                     <td><a asp-area="" asp-controller="Requests" asp-action="DeleteEventRequest" asp-route-requestId="@request.RequestId">Delete</a></td>
                 </tr>

@@ -9,5 +9,6 @@ namespace MilitaryScheduler.Models
         public string TargetUserId { get; set; }
         public string TargetedUserId { get; set; }
         public string EventId { get; set; }
+        public string Date { get; set; }
     }
 }

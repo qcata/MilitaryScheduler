@@ -51,7 +51,9 @@ namespace MilitaryScheduler.Controllers
                     var calendarEvent = _context.Events.FirstOrDefault(e => e.Id == evId);
                     if (calendarEvent != null)
                     {
-                        calendarEvent.UserId = request.TargetedUserId;
+                        calendarEvent.UserId = request.TargetUserId;
+                        var targetUser = _context.Users.First(u => u.Id == request.TargetUserId);
+                        calendarEvent.Text = targetUser.UserName;
                         _context.Requests.Remove(request);
                         _context.SaveChanges();
                     }
@@ -105,13 +107,14 @@ namespace MilitaryScheduler.Controllers
                 foreach (var request in requests)
                 {
                     var targetUserName = _userManager.FindByIdAsync(request.TargetUserId).Result.UserName;
-                    var targetedUserName = _userManager.FindByIdAsync(request.TargetUserId).Result.UserName;
+                    var targetedUserName = _userManager.FindByIdAsync(request.TargetedUserId).Result.UserName;
 
                     requestsList.Add(new RequestViewModel()
                     {
                         TargetedUser = targetedUserName,
                         TargetUser = targetUserName,
-                        RequestId = request.Id.ToString()
+                        RequestId = request.Id.ToString(),
+                        Date = request.Date
                     });
 
                     requestsViewModel.RequestsList = requestsList;
