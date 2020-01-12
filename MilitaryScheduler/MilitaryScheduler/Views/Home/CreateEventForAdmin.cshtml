@@ -1,0 +1,35 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using MilitaryScheduler.ViewModels
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+
+@model EventViewModel
+<script src="~/js/daypilot/daypilot-all.min.js" asp-append-version="true"></script>
+<link href="icons/style.css" rel="stylesheet" type="text/css">
+
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <form method="post">
+        <br />
+        <br />
+        <div class="form-group">
+            <label asp-for="Start"></label>
+            <h2 id="modelStartDate">@Model.Start</h2>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="ApplicationUser"></label><br />
+            <select asp-for="ApplicationUser" asp-items="Model.ApplicationUsers" class="form-control">
+            </select>
+        </div>
+        <input onclick="submitCustomModel()" type="submit" />
+    </form>
+}
+
+<script>
+    function submitCustomMode() {
+        var something = 
+    }
+</script>

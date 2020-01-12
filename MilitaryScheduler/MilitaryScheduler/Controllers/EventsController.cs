@@ -55,7 +55,7 @@ namespace MilitaryScheduler.Controllers
                 };
 
                 _context.Requests.Add(changeRequest);
-                 _context.SaveChanges();
+                _context.SaveChanges();
                 return "Success";
             }
             else
@@ -75,14 +75,47 @@ namespace MilitaryScheduler.Controllers
             if (overlappingEvent != null)
             {
                 var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (overlappingEvent.UserId == userID)
+                {
+                    return "Self";
+                }
                 var user = _userManager.FindByIdAsync(userID).Result;
+
                 var returnedObject = (overlappingEvent.Id, overlappingEvent.Text, user.IsSystemAdmin.ToString());
                 return returnedObject.ToString();
             }
             else
             {
+                var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var user = _userManager.FindByIdAsync(userID).Result;
+                if (user.IsSystemAdmin)
+                {
+                    return "Admin";
+                }
                 return string.Empty;
             }
+        }
+
+        // POST: api/Events
+        [HttpPost]
+        public async Task<IActionResult> PostEvent([FromBody] CalendarEvent @event)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (@event.UserId == null)
+            {
+                @event.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                @event.Text = User.FindFirstValue(ClaimTypes.Name);
+            }
+
+            @event.Color = "#b6d7a8";
+            _context.Events.Add(@event);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetEvent", new { id = @event.Id }, @event);
         }
 
         // GET: api/Events/5

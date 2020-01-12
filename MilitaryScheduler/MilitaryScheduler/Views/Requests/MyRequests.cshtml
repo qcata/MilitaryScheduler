@@ -5,8 +5,13 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 @{
-    var targetedRequestsList = Model.RequestsList.Where(r => r.TargetedUser == User.Identity.Name).ToList();
-    var targetRequestsList = Model.RequestsList.Where(r => r.TargetUser == User.Identity.Name).ToList();
+    var targetedRequestsList = new List<RequestViewModel>();
+    var targetRequestsList = new List<RequestViewModel>();
+    if (Model.RequestsList != null && Model.RequestsList.Any())
+    {
+        targetedRequestsList = Model.RequestsList.Where(r => r.TargetedUser == User.Identity.Name).ToList();
+        targetRequestsList = Model.RequestsList.Where(r => r.TargetUser == User.Identity.Name).ToList();
+    }
 }
 
 

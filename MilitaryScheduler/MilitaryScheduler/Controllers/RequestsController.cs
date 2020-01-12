@@ -117,6 +117,10 @@ namespace MilitaryScheduler.Controllers
                     requestsViewModel.RequestsList = requestsList;
                 }
             }
+            else
+            {
+                requestsViewModel.RequestsList = requestsList;
+            }
         }
     }
 }

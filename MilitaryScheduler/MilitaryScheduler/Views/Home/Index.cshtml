@@ -28,8 +28,13 @@
 }
 else
 {
+    <img src="~/images/stemaAtm.png" width="150px" style="padding-top:30px; display:flex; position:absolute" alt="Image" />
+    <div style="width:100%; margin-left ">
+        <img src="~/images/background.jpg" style="margin-left:-500px; opacity:50%;" alt="Image" />
+    </div>
+
     <p class="mega">
-        Military Scheduler
+        ATM Scheduler
     </p>
     <p class="mini">Please login in order to access the time scheduler.</p>
 }
@@ -57,8 +62,16 @@ else
             type: 'GET',
             url: '/api/events/getoverlapping?start=' + args.start.toString(),
             success: function (data) {
-                if (data === undefined || data === null) {
+                debugger;
+                if (data === undefined || data === null || data == '') {
                     createNewEvent();
+                }
+                else if (data === "Self") {
+                    dp.update();
+                    return;
+                }
+                else if (data === "Admin") {
+                    createEventForAdmin();
                 }
                 else {
                     requestChangeEvent(data);
@@ -136,6 +149,31 @@ else
         });
     }
 
+    function createEventForAdmin() {
+        DayPilot.Modal.confirm("Do you want to reserve this day?", { okText: "Yes", cancelText: "No" }).then(function (modal) {
+
+            var dp = tempControl.control;
+                dp.clearSelection();
+                if (modal.result === undefined) {
+                    return;
+            }
+            debugger;
+            var uri = '@Url.Action("LoadEventPage","Home")?startDate=' + tempControl.start.toString();
+            $.ajax({
+                type: 'GET',
+                url: uri,
+                success: function (response) {
+                    if (response.result == 'Redirect') {
+                        window.location.href = response.url;
+                    }
+                },
+            contentType: "application/json",
+            dataType: 'json'
+            });
+
+        });
+    }
+
     function requestChangeEvent(data) {
         data = data.slice(1, -1);
         var response = data.split(/[\s,]+/);
@@ -151,7 +189,6 @@ else
                     type: 'GET',
                     url: '/api/events/createchangerequest?eventId=' + tempEventId,
                     success: function (data) {
-                        debugger;
                         if (data === "Forbidden") {
                             dp.message("You can not create a change request for this event");
                         }

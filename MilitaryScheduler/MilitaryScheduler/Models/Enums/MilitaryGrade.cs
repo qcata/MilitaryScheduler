@@ -6,6 +6,6 @@
         Locotenent,
         Capitan,
         Maior,
-        Clonel
+        Colonel
     }
 }
